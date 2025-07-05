@@ -1,10 +1,14 @@
-This is a simple form builder application that uses CopilotKit to allow prompts to be turned into forms. It was created to go along with a Medium article I wrote ->
+![Demo Screenshot](readme-img.png)
+
+This is a simple form builder application that uses CopilotKit to allow prompts to be turned into forms. It was created to go along with a Medium article I wrote 👉 [http://localhost:3000](http://localhost:3000)
+
+
 
 ## Running it yourself
 
-**You must provide your own OPENAI_API_KEY in a .env file for this project to work.**
+**You must provide your own `OPENAI_API_KEY` in a .env file for this project to work.**
 
-Additionally, add NEXT_PUBLIC_COPILOTKIT_RUNTIME_URL=/api/copilotkit to the .env file before running.
+Additionally, add `NEXT_PUBLIC_COPILOTKIT_RUNTIME_URL=/api/copilotkit` to the .env file before running.
 
 Run the development server:
 
