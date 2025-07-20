@@ -6,8 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { useCopilotAction } from "@copilotkit/react-core";
+import { useCopilotAction, useCopilotReadable } from "@copilotkit/react-core";
 import { useState } from "react";
+import { v4 as uuidv4 } from "uuid";
 
 import dynamic from "next/dynamic";
 
@@ -19,6 +20,7 @@ const CopilotSidebar = dynamic(
 type Form = {
   title: string;
   elements: {
+    id: string;
     type: "text" | "date" | "radio" | "file" | "textarea";
     config: { [key: string]: any };
   }[];
@@ -28,6 +30,11 @@ export default function Home() {
   const [form, setForm] = useState<Form>({
     title: "",
     elements: [],
+  });
+
+  useCopilotReadable({
+    description: "The form that the user is creating and editing",
+    value: form,
   });
 
   useCopilotAction({
@@ -71,7 +78,7 @@ export default function Home() {
         ...prevForm,
         elements: [
           ...prevForm.elements,
-          { type: "text", config: { required, label } },
+          { id: uuidv4(), type: "text", config: { required, label } },
         ],
       }));
     },
@@ -120,7 +127,7 @@ export default function Home() {
         ...prevForm,
         elements: [
           ...prevForm.elements,
-          { type: "radio", config: { label, options, required } },
+          { id: uuidv4(), type: "radio", config: { label, options, required } },
         ],
       }));
     },
@@ -155,7 +162,7 @@ export default function Home() {
         ...prevForm,
         elements: [
           ...prevForm.elements,
-          { type: "date", config: { label, required } },
+          { id: uuidv4(), type: "date", config: { label, required } },
         ],
       }));
     },
@@ -202,10 +209,118 @@ export default function Home() {
         elements: [
           ...prevForm.elements,
           {
+            id: uuidv4(),
             type: "textarea",
             config: { label, required, placeholder, rows, maxLength },
           },
         ],
+      }));
+    },
+  });
+
+  useCopilotAction({
+    name: "editFormElement",
+    description: "Edit an existing form element's properties",
+    parameters: [
+      {
+        name: "elementId",
+        type: "string",
+        description: "The ID of the element to edit",
+        required: true,
+      },
+      {
+        name: "label",
+        type: "string",
+        description: "The new label for the element",
+        required: false,
+      },
+      {
+        name: "required",
+        type: "boolean",
+        description: "Whether the element is required",
+        required: false,
+      },
+      {
+        name: "placeholder",
+        type: "string",
+        description: "Placeholder text (for text and textarea elements)",
+        required: false,
+      },
+      {
+        name: "rows",
+        type: "number",
+        description: "Number of visible lines (for textarea elements)",
+        required: false,
+      },
+      {
+        name: "maxLength",
+        type: "number",
+        description: "Maximum number of characters (for textarea elements)",
+        required: false,
+      },
+      {
+        name: "accept",
+        type: "string",
+        description: "File types to accept (for file upload elements)",
+        required: false,
+      },
+      {
+        name: "multiple",
+        type: "boolean",
+        description:
+          "Whether multiple files can be uploaded (for file upload elements)",
+        required: false,
+      },
+      {
+        name: "options",
+        type: "object[]",
+        description: "Options for radio inputs",
+        attributes: [
+          {
+            name: "value",
+            type: "string",
+            description: "The value of the radio option",
+            required: true,
+          },
+          {
+            name: "label",
+            type: "string",
+            description: "The label for the radio option",
+            required: true,
+          },
+        ],
+        required: false,
+      },
+    ],
+    handler: async ({ elementId, ...updates }) => {
+      setForm((prevForm) => ({
+        ...prevForm,
+        elements: prevForm.elements.map((element) =>
+          element.id === elementId
+            ? { ...element, config: { ...element.config, ...updates } }
+            : element
+        ),
+      }));
+    },
+  });
+
+  useCopilotAction({
+    name: "removeFormElement",
+    description: "Remove an element from the form",
+    parameters: [
+      {
+        name: "elementId",
+        type: "string",
+        description: "The ID of the element to remove",
+        required: true,
+      },
+    ],
+    handler: async ({ elementId }) => {
+      setForm((prevForm) => ({
+        ...prevForm,
+        elements: prevForm.elements.filter(
+          (element) => element.id !== elementId
+        ),
       }));
     },
   });
@@ -244,7 +359,11 @@ export default function Home() {
         ...prevForm,
         elements: [
           ...prevForm.elements,
-          { type: "file", config: { label, required, accept, multiple } },
+          {
+            id: uuidv4(),
+            type: "file",
+            config: { label, required, accept, multiple },
+          },
         ],
       }));
     },
@@ -356,6 +475,7 @@ export default function Home() {
       <CopilotSidebar
         clickOutsideToClose={false}
         defaultOpen={true}
+        instructions="You can help me build a form by adding elements like text inputs, radio buttons, date pickers, file uploads, and text areas"
         labels={{
           title: "Form builder assistant",
           initial: "Describe your form to me",
