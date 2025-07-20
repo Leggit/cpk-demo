@@ -1,8 +1,10 @@
 "use client";
 
 import { Calendar } from "@/components/ui/calendar";
+import { FileUpload } from "@/components/ui/file-upload";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useCopilotAction } from "@copilotkit/react-core";
 import { useState } from "react";
@@ -17,7 +19,7 @@ const CopilotSidebar = dynamic(
 type Form = {
   title: string;
   elements: {
-    type: "text" | "date" | "radio";
+    type: "text" | "date" | "radio" | "file" | "textarea";
     config: { [key: string]: any };
   }[];
 };
@@ -159,6 +161,95 @@ export default function Home() {
     },
   });
 
+  useCopilotAction({
+    name: "addTextAreaElement",
+    description: "Add a textarea input to the form for longer text content",
+    parameters: [
+      {
+        name: "label",
+        type: "string",
+        description: "The label for the textarea",
+        required: true,
+      },
+      {
+        name: "required",
+        type: "boolean",
+        description: "Whether the textarea is required",
+        required: false,
+      },
+      {
+        name: "placeholder",
+        type: "string",
+        description: "Placeholder text for the textarea",
+        required: false,
+      },
+      {
+        name: "rows",
+        type: "number",
+        description: "Number of visible text lines",
+        required: false,
+      },
+      {
+        name: "maxLength",
+        type: "number",
+        description: "Maximum number of characters allowed",
+        required: false,
+      },
+    ],
+    handler: async ({ label, required, placeholder, rows, maxLength }) => {
+      setForm((prevForm) => ({
+        ...prevForm,
+        elements: [
+          ...prevForm.elements,
+          {
+            type: "textarea",
+            config: { label, required, placeholder, rows, maxLength },
+          },
+        ],
+      }));
+    },
+  });
+
+  useCopilotAction({
+    name: "addFileUploadElement",
+    description: "Add a file upload input to the form",
+    parameters: [
+      {
+        name: "label",
+        type: "string",
+        description: "The label for the file upload",
+        required: true,
+      },
+      {
+        name: "required",
+        type: "boolean",
+        description: "Whether the file upload is required",
+        required: false,
+      },
+      {
+        name: "accept",
+        type: "string",
+        description: "File types to accept (e.g., '.pdf,.doc,image/*')",
+        required: false,
+      },
+      {
+        name: "multiple",
+        type: "boolean",
+        description: "Whether multiple files can be uploaded",
+        required: false,
+      },
+    ],
+    handler: async ({ label, required, accept, multiple }) => {
+      setForm((prevForm) => ({
+        ...prevForm,
+        elements: [
+          ...prevForm.elements,
+          { type: "file", config: { label, required, accept, multiple } },
+        ],
+      }));
+    },
+  });
+
   return (
     <>
       <div className="max-w-3xl p-4 mx-auto">
@@ -215,6 +306,48 @@ export default function Home() {
                         : undefined
                     }
                   />
+                </div>
+              );
+            case "file":
+              return (
+                <div key={index} className="p-4 m-2 shadow-md rounded-md">
+                  <FileUpload
+                    label={element.config.label}
+                    required={element.config.required}
+                    accept={element.config.accept}
+                    multiple={element.config.multiple}
+                  />
+                </div>
+              );
+            case "textarea":
+              return (
+                <div key={index} className="p-4 m-2 shadow-md rounded-md">
+                  <Label className="mb-2">
+                    {element.config.label}
+                    {element.config.required && " *"}
+                  </Label>
+                  <div className="relative">
+                    <Textarea
+                      required={element.config.required}
+                      placeholder={element.config.placeholder}
+                      rows={element.config.rows || 4}
+                      maxLength={element.config.maxLength}
+                      className="mt-2"
+                      onChange={(e) => {
+                        const target = e.target as HTMLTextAreaElement;
+                        const counter =
+                          target.nextElementSibling as HTMLElement;
+                        if (counter) {
+                          counter.textContent = `${target.value.length}/${element.config.maxLength}`;
+                        }
+                      }}
+                    />
+                    {element.config.maxLength && (
+                      <div className="text-sm text-gray-500 mt-1 text-right">
+                        0/{element.config.maxLength}
+                      </div>
+                    )}
+                  </div>
                 </div>
               );
           }
