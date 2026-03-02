@@ -1,13 +1,7 @@
 "use client";
 
-import { Calendar } from "@/components/ui/calendar";
-import { FileUpload } from "@/components/ui/file-upload";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { useCopilotAction, useCopilotReadable } from "@copilotkit/react-core";
+import { useCopilotReadable } from "@copilotkit/react-core";
 import { useState } from "react";
-import { v4 as uuidv4 } from "uuid";
 
 import dynamic from "next/dynamic";
 import {
@@ -28,10 +22,14 @@ import {
   RadioControl,
   useRadioControlActions,
 } from "@/components/form-elements/radio";
+import {
+  DateControl,
+  useDateControlActions,
+} from "@/components/form-elements/date";
 
 const CopilotSidebar = dynamic(
   () => import("@copilotkit/react-ui").then((mod) => mod.CopilotSidebar),
-  { ssr: false } // <-- The key part!
+  { ssr: false }, // <-- The key part!
 );
 
 export default function Home() {
@@ -46,46 +44,11 @@ export default function Home() {
   });
 
   useFormActions(setForm);
-
-  useCopilotAction({
-    name: "addDateInputElement",
-    description: "Add a date input to the form",
-    parameters: [
-      {
-        name: "label",
-        type: "string",
-        description: "The label for the date input",
-        required: true,
-      },
-      {
-        name: "required",
-        type: "boolean",
-        description: "Whether the date input is required",
-        required: false,
-      },
-      {
-        name: "defaultMonth",
-        type: "string",
-        description:
-          "The default month for the date input in ISO format (YYYY-MM-DD)",
-        required: false,
-      },
-    ],
-    handler: async ({ label, required }) => {
-      setForm((prevForm) => ({
-        ...prevForm,
-        elements: [
-          ...prevForm.elements,
-          { id: uuidv4(), type: "date", config: { label, required } },
-        ],
-      }));
-    },
-  });
-
   useTextInputActions(setForm);
   useTextAreaActions(setForm);
   useFileUploadActions(setForm);
   useRadioControlActions(setForm);
+  useDateControlActions(setForm);
 
   return (
     <>
@@ -108,18 +71,7 @@ export default function Home() {
             case "date":
               return (
                 <div key={index} className="p-4 m-2 shadow-md rounded-md">
-                  <Label className="mb-2">
-                    {element.config.label}
-                    {element.config.required && " *"}
-                  </Label>
-                  <Calendar
-                    mode="single"
-                    defaultMonth={
-                      element.config.defaultMonth
-                        ? new Date(element.config.defaultMonth)
-                        : undefined
-                    }
-                  />
+                  <DateControl element={element} />
                 </div>
               );
             case "file":
